@@ -38,15 +38,17 @@ export default async function (ipc: typeof Ipc, client: Client) {
               ipc.server.emit(socket, "send:prompt", state.promptData[message.id])
               delete state.promptData[message.id]
               if (nodeParameters.placeholder) {
-                const message = await channel.send({ content: nodeParameters.placeholder }).catch((e: any) => e)
-                await execution(
-                  nodeParameters.executionId,
-                  message.id,
-                  channel.id,
-                  nodeParameters.apiKey,
-                  nodeParameters.baseUrl,
-                ).catch((e) => e)
-                placeholderLoading(message, message.id, nodeParameters.placeholder)
+                if (channel && channel.isSendable()) {
+                  message = await channel.send(content)
+                  await execution(
+                    nodeParameters.executionId,
+                    message.id,
+                    channel.id,
+                    nodeParameters.apiKey,
+                    nodeParameters.baseUrl,
+                  ).catch((e) => e)
+                  await placeholderLoading(message, message.id, nodeParameters.placeholder)
+                }
               }
             }
 
@@ -136,10 +138,12 @@ export default async function (ipc: typeof Ipc, client: Client) {
                   addLog(`${e}`, client)
                 })
               }
-            } else {
+            } else if (channel && channel.isSendable()) {
               message = await channel.send(sendObject as MessageCreateOptions).catch((e: any) => {
                 addLog(`${e}`, client)
               })
+            } else {
+              console.error("channel is not sendable")
             }
 
             if (message && message.id && !nodeParameters.persistent) {

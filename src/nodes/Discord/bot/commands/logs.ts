@@ -30,7 +30,10 @@ export default {
         logs.forEach((log) => {
           content += "**" + log + "**\n"
         })
-        interaction.channel?.send(content)
+        const channel = interaction.channel
+        if (channel && channel.isSendable()) {
+          channel.send(content)
+        }
         return "Logs:"
       }
     } else if (["auto", "stop"].includes(param)) {

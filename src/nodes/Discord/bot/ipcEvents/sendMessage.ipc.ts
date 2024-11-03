@@ -153,10 +153,14 @@ export default async function (ipc: typeof Ipc, client: Client) {
                 }
               }
             }
-            const message = (await channel.send(sendObject).catch((e: any) => {
-              addLog(`${e}`, client)
-            })) as Message
-            ipc.server.emit(socket, "send:message", { channelId, messageId: message.id })
+            if (channel && channel.isSendable()) {
+              const message = (await channel.send(sendObject).catch((e: any) => {
+                addLog(`${e}`, client)
+              })) as Message
+              ipc.server.emit(socket, "send:message", { channelId, messageId: message.id })
+            } else {
+              console.error("channel is not sendable")
+            }
           })
           .catch((e: any) => {
             addLog(`${e}`, client)
